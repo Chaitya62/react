@@ -97,6 +97,7 @@ export function createBridge(contentWindow: any, wall?: Wall): BackendBridge {
     wall = {
       listen(fn) {
         const onMessage = ({data}) => {
+          console.log("WHAT CHAITYA");
           fn(data);
         };
         contentWindow.addEventListener('message', onMessage);
