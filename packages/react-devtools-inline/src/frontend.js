@@ -17,6 +17,8 @@ import type {Wall} from 'react-devtools-shared/src/types';
 import type {FrontendBridge} from 'react-devtools-shared/src/bridge';
 import type {Props} from 'react-devtools-shared/src/devtools/views/DevTools';
 
+import DevtoolsProxyBridge from './devtoolsProxyBridge';
+
 type Config = {
   checkBridgeProtocolCompatibility?: boolean,
   supportsNativeInspection?: boolean,
@@ -34,19 +36,35 @@ export function createStore(bridge: FrontendBridge, config?: Config): Store {
 }
 
 export function createBridge(contentWindow: any, wall?: Wall): FrontendBridge {
+  //var v = new window.WebSocket("ws://mobile-103-234-68-74.browserstack.com");
+  console.log(DevtoolsProxyBridge);
+  var dpb = DevtoolsProxyBridge();
+  var url = "wss://devtools-aps1c-mobile.browserstack.com/?live_session_id=2370dd0391f90402ea53b3e2719db090c191b136&device=fe44af64994b502af49777648205ec5a84c2926b3e66f6272e8459d3b5d1199e&devtoolshost=mobile-103-234-68-155.browserstack.com&react_devtools=true"
+  //url = "ws://mobile-103-234-68-155.browserstack.com:80/";
+  url = "wss://devtools-aps1c-mobile.browserstack.com/?live_session_id=0951eb43eb60dee2c800d4d1d4e41fdac1b5553f&device=51d11d7a95aa53ed90a7ea02715a379ccf1ac37367ae0e4862803692362d9564&devtoolshost=mobile-103-234-68-155.browserstack.com&react_devtools=true";
+  dpb.init(url);
+  //dpb.init("ws://localhost:8888");
   if (wall == null) {
     wall = {
       listen(fn) {
         const onMessage = ({data}) => {
-          fn(data);
+          console.log("CHAITYA FE DATA", JSON.parse(data));
+          fn(JSON.parse(data));
         };
-        window.addEventListener('message', onMessage);
-        return () => {
-          window.removeEventListener('message', onMessage);
-        };
+
+        // returns a method which can be use to unsubscribe 
+        return dpb.addEventListener('message', onMessage);
+        //window.addEventListener('message', onMessage);
+        // return () => {
+          //window.removeEventListener('message', onMessage);
+         // v.removeEventListener('message', onMessage);
+       // };
       },
       send(event: string, payload: any, transferable?: Array<any>) {
-        contentWindow.postMessage({event, payload}, '*', transferable);
+           console.log("SENDING TO REACT UI", event);
+           console.log("PAYLOAD", payload);
+          dpb.send(JSON.stringify({event: event, payload: payload}));
+        //contentWindow.postMessage({event, payload}, '*', transferable);
       },
     };
   }
